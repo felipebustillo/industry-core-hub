@@ -69,9 +69,9 @@ spec:
           args:
             - |
               set -e
-              echo "Waiting for Keycloak at http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.httpPort | default 80 }}{{ .Values.keycloak.keycloak.httpRelativePath | default "/" }}realms/master..."
+              echo "Waiting for Keycloak at http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.httpPort | default 80 }}{{ .Values.keycloak.keycloak.httpRelativePath | default "" | trimSuffix "/" }}/realms/master..."
               for i in $(seq 1 60); do
-                if curl -f "http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.httpPort | default 80 }}{{ .Values.keycloak.keycloak.httpRelativePath | default "/" }}realms/master" >/dev/null 2>&1; then
+                if curl -f "http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.httpPort | default 80 }}{{ .Values.keycloak.keycloak.httpRelativePath | default "" | trimSuffix "/" }}/realms/master" >/dev/null 2>&1; then
                   echo "✓ Keycloak is ready!"
                   exit 0
                 fi
