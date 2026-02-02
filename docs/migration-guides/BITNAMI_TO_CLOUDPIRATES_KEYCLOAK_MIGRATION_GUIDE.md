@@ -2,352 +2,280 @@
 
 **Migration**: Bitnami Keycloak 25.x → CloudPirates Keycloak 26.x
 
-> 📖 For general migration concepts and configuration mapping, see the [Generic Keycloak Migration Guide](./GENERIC_BITNAMI_TO_CLOUDPIRATES_KEYCLOAK_MIGRATION_GUIDE.md)
-
-## Overview
-
-### What Changed in Industry Core Hub
-
-| Component | Change |
-|-----------|--------|
-| Chart dependency | Bitnami → CloudPirates |
-| Keycloak version | 25.0.6 → 26.5.2 |
-| Realm configuration | `keycloak.realm` → `keycloak.ichubRealm` |
-| Database connection | Automatic via service alias |
-| Realm import | Custom job with keycloak-config-cli |
+> 📖 For general Keycloak migration concepts applicable to other projects, see the [Generic Keycloak Migration Guide](./GENERIC_BITNAMI_TO_CLOUDPIRATES_KEYCLOAK_MIGRATION_GUIDE.md)
 
 ---
 
-## Automatic Configuration
+## Who Is This Guide For?
 
-Industry Core Hub handles several migration complexities automatically:
-
-### 1. Database Host Resolution
-
-**Problem**: CloudPirates requires explicit `database.host`, but the PostgreSQL service name depends on the release name.
-
-**Solution**: The chart creates an `ExternalName` service alias:
-- Template: `templates/service-postgresql-alias.yaml`
-- Fixed name: `ichub-postgresql-alias`
-- Points to: `<release-name>-postgresql`
-
-**No manual `--set` required** for database configuration.
-
-### 2. Database Secret Format
-
-**Problem**: CloudPirates expects `db-username` and `db-password` keys.
-
-**Solution**: Auto-generated secret:
-- Template: `templates/secret-keycloak-db.yaml`
-- Name: `ichub-keycloak-db`
-- Keys: `db-username`, `db-password`, `db-host`, `db-url`
-
-### 3. Realm Import
-
-**Method**: Post-install Kubernetes job using `keycloak-config-cli`
-- Template: `templates/job-realm-import.yaml`
-- ConfigMap: `templates/configmap-realm-data.yaml`
-- Waits for Keycloak to be ready before importing
+| Scenario | What to Do |
+|----------|------------|
+| **New installation** (no existing Keycloak) | Just deploy! All configurations are already applied. Skip to [Quick Start](#quick-start-new-installation). |
+| **Upgrading from Bitnami** (existing deployment) | Follow the [Migration Steps](#migration-steps-upgrading-from-bitnami) below. |
+| **Understanding the changes** | Read the [What Changed](#what-changed) section. |
 
 ---
 
-## Configuration Changes
+## Quick Start (New Installation)
 
-### Template References
-
-Update any custom templates:
-
-```yaml
-# Old (Bitnami)
-{{- range $user := .Values.keycloak.realm.users }}
-{{ .Values.keycloak.auth.adminUser }}
-
-# New (CloudPirates)  
-{{- range $user := .Values.keycloak.ichubRealm.users }}
-{{ .Values.keycloak.keycloak.adminUser }}
-```
-
-### values.yaml Key Sections
-
-#### Admin Configuration
-```yaml
-keycloak:
-  keycloak:
-    adminUser: admin
-    adminPassword: "keycloak-admin-password"
-    proxyHeaders: "xforwarded"
-    production: false
-    httpRelativePath: /auth  # No trailing slash!
-```
-
-#### ICHub Realm Users
-```yaml
-keycloak:
-  ichubRealm:
-    name: "ICHub"
-    users:
-      - username: ichub-admin
-        # Password from secret: ichub-test-keycloak-realm-users
-```
-
-#### Database (Automatic)
-```yaml
-keycloak:
-  database:
-    type: postgres
-    name: ichub-postgres
-    host: "ichub-postgresql-alias"  # Auto-resolved
-    existingSecret: "ichub-keycloak-db"  # Auto-created
-  postgres:
-    enabled: false  # Uses main PostgreSQL
-```
-
----
-
-## Migration Steps for Industry Core Hub
-
-### Step 1: Backup Current Installation (if upgrading)
+If you're deploying Industry Core Hub for the first time, no migration is needed. The chart already uses CloudPirates Keycloak:
 
 ```bash
+# Clone the repository
+git clone https://github.com/eclipse-tractusx/industry-core-hub.git
+cd industry-core-hub/charts/industry-core-hub
+
+# Update dependencies
+helm dependency update
+
+# Deploy
+helm install ichub . -n ichub --create-namespace
+
+# Wait for all pods to be ready (~2-3 minutes)
+kubectl get pods -n ichub -w
+```
+
+**Expected result:**
+```
+NAME                                       READY   STATUS    AGE
+ichub-postgresql-0                         1/1     Running   2m
+ichub-keycloak-0                           1/1     Running   2m
+industry-core-hub-backend-xxx              1/1     Running   2m
+industry-core-hub-frontend-xxx             1/1     Running   2m
+```
+
+**Verify Keycloak works:**
+```bash
+kubectl port-forward svc/ichub-keycloak 8080:80 -n ichub &
+curl -s http://localhost:8080/auth/realms/ICHub | jq .realm
+# Expected: "ICHub"
+```
+
+---
+
+## What Changed
+
+### Summary of Changes
+
+| Component | Bitnami (Old) | CloudPirates (New) |
+|-----------|---------------|-------------------|
+| Chart dependency | `bitnamicharts/keycloak:23.0.0` | `cloudpirates/keycloak:0.13.6` |
+| Keycloak version | 25.0.6 | 26.5.2 |
+| Docker image | `bitnami/keycloak` (custom) | `keycloak/keycloak` (official) |
+| Themes path | `/opt/bitnami/keycloak/themes/` | `/opt/keycloak/themes/` |
+| Config structure | `keycloak.auth.*` | `keycloak.keycloak.*` |
+| Realm config | `keycloak.realm` | `keycloak.ichubRealm` |
+| Proxy setting | `proxy: edge` | `proxyHeaders: "xforwarded"` |
+| Init containers | `initContainers` | `extraInitContainers` |
+
+### Configuration Mapping
+
+```yaml
+# OLD (Bitnami)                        # NEW (CloudPirates)
+keycloak:                              keycloak:
+  auth:                                  keycloak:
+    adminUser: admin                       adminUser: admin
+    adminPassword: "..."                   adminPassword: "..."
+  proxy: edge                              proxyHeaders: "xforwarded"
+  production: false                        production: false
+  httpRelativePath: /auth/                 httpRelativePath: /auth  # NO trailing slash!
+  realm:                                 ichubRealm:
+    users: [...]                           users: [...]
+  initContainers: [...]                  extraInitContainers: [...]
+```
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `Chart.yaml` | Keycloak dependency: Bitnami → CloudPirates |
+| `values.yaml` | Configuration restructured for CloudPirates |
+| `templates/_helpers.tpl` | Added password helper for consistency |
+| `templates/secret-keycloak-db.yaml` | **NEW** - Auto-creates DB secret |
+| `templates/service-postgresql-alias.yaml` | **NEW** - Auto-resolves DB host |
+| `templates/secret-backend-postgres.yaml` | Uses shared password helper |
+| `templates/configmap-realm-data.yaml` | Updated `realm` → `ichubRealm` references |
+| `templates/job-realm-import.yaml` | Updated for CloudPirates |
+
+### Automatic Configurations
+
+Industry Core Hub handles these CloudPirates requirements automatically:
+
+1. **Database Host**: Creates `ichub-postgresql-alias` service that resolves to the PostgreSQL pod
+2. **Database Secret**: Creates `ichub-keycloak-db` secret with required `db-username`/`db-password` keys
+3. **Password Sync**: Uses shared helper to ensure PostgreSQL and Keycloak use the same database password
+
+---
+
+## Migration Steps (Upgrading from Bitnami)
+
+> ⚠️ **This migration requires downtime.** Schedule a maintenance window.
+
+### Step 1: Backup Your Data
+
+```bash
+# Set your namespace
+NAMESPACE=ichub
+RELEASE=ichub
+
+# Port forward to Keycloak
+kubectl port-forward svc/${RELEASE}-keycloak 8080:80 -n ${NAMESPACE} &
+
 # Export realm from Admin Console:
-# 1. Port forward: kubectl port-forward svc/<release>-keycloak 8080:80 -n <namespace>
-# 2. Navigate to http://localhost:8080/auth/admin
-# 3. Go to ICHub realm → Realm Settings → Action → Partial Export
-# 4. Save the JSON file
+# 1. Navigate to http://localhost:8080/auth/admin
+# 2. Login with admin credentials
+# 3. Select ICHub realm
+# 4. Go to Realm Settings → Action → Partial Export
+# 5. Check all options, click Export
+# 6. Save the JSON file
 
-# Backup database (optional):
-kubectl exec <postgresql-pod> -n <namespace> -- \
-  pg_dump -U ichub_keycloak -d ichub-postgres > ichub_keycloak_backup.sql
+# Backup database
+kubectl exec ${RELEASE}-postgresql-0 -n ${NAMESPACE} -- \
+  pg_dump -U ichub_keycloak -d ichub-postgres > keycloak_backup.sql
 ```
 
-### Step 2: Update Chart.yaml
-
-The dependency has been updated:
-
-```yaml
-# Before
-dependencies:
-  - condition: keycloak.enabled
-    name: keycloak
-    repository: oci://registry-1.docker.io/bitnamicharts
-    version: 23.0.0
-
-# After
-dependencies:
-  - condition: keycloak.enabled
-    name: keycloak
-    repository: oci://registry-1.docker.io/cloudpirates
-    version: 0.13.6
-```
-
-### Step 3: Update Template References
-
-If you have custom templates, update these references:
-
-```yaml
-# Old (Bitnami)
-{{- range $user := .Values.keycloak.realm.users }}
-{{ .Values.keycloak.auth.adminUser }}
-
-# New (CloudPirates)
-{{- range $user := .Values.keycloak.ichubRealm.users }}
-{{ .Values.keycloak.keycloak.adminUser }}
-```
-
-### Step 4: Uninstall Current Deployment (if upgrading)
+### Step 2: Uninstall Current Deployment
 
 ```bash
-# Uninstall
-helm uninstall <release-name> -n <namespace>
+# Uninstall the release
+helm uninstall ${RELEASE} -n ${NAMESPACE}
 
-# Delete old secrets and PVCs (optional, for clean start)
-kubectl delete pvc,secrets --all -n <namespace>
+# Wait for pods to terminate
+kubectl wait --for=delete pod/${RELEASE}-keycloak-0 -n ${NAMESPACE} --timeout=120s
 
-# Wait for cleanup
-sleep 10
+# Optional: Delete PVCs for clean start (will lose data!)
+# kubectl delete pvc --all -n ${NAMESPACE}
+```
+
+### Step 3: Get the Updated Chart
+
+```bash
+# If using git
+git pull origin main
+
+# Or fetch the latest chart
+# (already done if you have the migrated chart)
+```
+
+### Step 4: Update Dependencies
+
+```bash
+cd charts/industry-core-hub
+helm dependency update
 ```
 
 ### Step 5: Deploy New Version
 
 ```bash
-# Navigate to chart directory
-cd charts/industry-core-hub
+# Deploy (no --set flags needed!)
+helm install ${RELEASE} . -n ${NAMESPACE}
 
-# Update dependencies
-helm dependency update
-
-# Deploy (no extra flags needed - everything is automatic)
-helm install ichub . -n ichub --create-namespace
-
-# Or upgrade existing
-helm upgrade ichub . -n ichub
+# Watch the deployment
+kubectl get pods -n ${NAMESPACE} -w
 ```
 
-> **Note**: No `--set` flags required! Database host and secrets are configured automatically.
-
-### Step 6: Wait for Deployment
+### Step 6: Verify Migration
 
 ```bash
-# Watch pods
-kubectl get pods -n ichub -w
+# Wait for all pods to be ready
+kubectl wait --for=condition=ready pod/${RELEASE}-keycloak-0 -n ${NAMESPACE} --timeout=300s
 
-# Expected output (after ~2-3 minutes):
-# ichub-postgresql-0                 1/1  Running
-# ichub-keycloak-0                   1/1  Running
-# industry-core-hub-backend-xxx      1/1  Running
-# industry-core-hub-frontend-xxx     1/1  Running
-# ichub-realm-import-xxx             Completed (then deleted)
-```
-
-### Step 7: Verify Migration
-
-```bash
-# Port forward to Keycloak
-kubectl port-forward svc/ichub-keycloak 8080:80 -n ichub &
+# Port forward
+kubectl port-forward svc/${RELEASE}-keycloak 8080:80 -n ${NAMESPACE} &
 
 # Verify realm exists
 curl -s http://localhost:8080/auth/realms/ICHub | jq .realm
 # Expected: "ICHub"
 
-# Get admin token
+# Get admin token and verify users
 TOKEN=$(curl -s -X POST "http://localhost:8080/auth/realms/master/protocol/openid-connect/token" \
   -d "username=admin" \
   -d "password=keycloak-admin-password" \
   -d "grant_type=password" \
   -d "client_id=admin-cli" | jq -r '.access_token')
 
-# Verify users
 curl -s "http://localhost:8080/auth/admin/realms/ICHub/users" \
   -H "Authorization: Bearer $TOKEN" | jq '.[].username'
 # Expected: "ichub-admin"
-
-# Verify clients
-curl -s "http://localhost:8080/auth/admin/realms/ICHub/clients" \
-  -H "Authorization: Bearer $TOKEN" | jq '.[].clientId' | grep industry
-# Expected: "industry-core-hub-api", "industry-core-hub-frontend"
 ```
 
-### Step 8: Test Application
+### Step 7: Test the Application
 
 ```bash
 # Port forward frontend
-kubectl port-forward svc/industry-core-hub-frontend 3000:8080 -n ichub &
+kubectl port-forward svc/industry-core-hub-frontend 3000:8080 -n ${NAMESPACE} &
 
-# Access application
+# Access the application
 echo "Frontend: http://localhost:3000"
 echo "Login with: ichub-admin / <password-from-values.yaml>"
 ```
 
 ---
 
-## Files Changed
-
-| File | Change |
-|------|--------|
-| `Chart.yaml` | Keycloak dependency: Bitnami → CloudPirates 0.13.6 |
-| `values.yaml` | Configuration restructured for CloudPirates |
-| `templates/_helpers.tpl` | Added `ichubPassword` helper for consistent password generation |
-| `templates/secret-keycloak-db.yaml` | **NEW** - Auto-creates DB secret with correct keys |
-| `templates/service-postgresql-alias.yaml` | **NEW** - Auto-resolves DB host dynamically |
-| `templates/secret-backend-postgres.yaml` | Updated to use shared password helper |
-| `templates/configmap-realm-data.yaml` | Updated references |
-| `templates/job-realm-import.yaml` | Updated for CloudPirates |
-
----
-
-## Deployment
-
-Standard deployment (no extra flags needed):
-
-```bash
-# Update dependencies
-helm dependency update
-
-# Deploy
-helm install ichub ./charts/industry-core-hub -n ichub
-
-# Or upgrade existing
-helm upgrade ichub ./charts/industry-core-hub -n ichub
-```
-
-### Verify Deployment
-
-```bash
-# Check pods
-kubectl get pods -n ichub
-
-# Expected:
-# ichub-keycloak-0     1/1  Running
-# ichub-postgresql-0   1/1  Running
-
-# Verify Keycloak responds
-kubectl port-forward svc/ichub-keycloak 8080:80 -n ichub &
-curl -s http://localhost:8080/auth/realms/ICHub | jq .realm
-# Should return: "ICHub"
-```
-
----
-
 ## Troubleshooting
 
-### Realm Import Job Stuck
+### Pod Shows 0/1 Ready (CrashLoopBackOff)
 
-**Symptom**: `ichub-realm-import-*` pod in `Init:0/1` state
-
-**Check init container logs**:
+**Check logs:**
 ```bash
-kubectl logs <job-pod> -c wait-for-keycloak -n ichub
+kubectl logs ${RELEASE}-keycloak-0 -n ${NAMESPACE} --tail=50
 ```
 
-**Common causes**:
-- Keycloak not ready yet (wait longer)
-- Wrong URL in wait script (check `httpRelativePath`)
+**Common causes:**
 
-### Database Connection Issues
+| Error | Solution |
+|-------|----------|
+| `password authentication failed for user "ichub_keycloak"` | Secrets mismatch. Delete secrets and redeploy: `kubectl delete secret ichub-keycloak-db ichub-postgres-secret -n ${NAMESPACE}` |
+| `Connection refused` to PostgreSQL | PostgreSQL not ready yet. Wait and check: `kubectl get pods -n ${NAMESPACE}` |
+| `readiness probe failed` with double slash | Check `httpRelativePath: /auth` has NO trailing slash |
 
-**Symptom**: Keycloak fails with connection errors
+### Realm Import Job Stuck (Init:0/1)
 
-**Verify alias service**:
+**Check wait container:**
 ```bash
-kubectl get svc ichub-postgresql-alias -n ichub -o yaml
-# externalName should point to <release>-postgresql.<namespace>.svc.cluster.local
+kubectl logs ${RELEASE}-realm-import-xxx -c wait-for-keycloak -n ${NAMESPACE}
 ```
 
-**Verify secrets**:
+**Causes:**
+- Keycloak pod not ready yet (wait longer)
+- Wrong URL (check service name and port)
+
+### Users/Clients Not Present
+
+**Check job logs:**
 ```bash
-kubectl get secret ichub-keycloak-db -n ichub -o jsonpath='{.data}' | jq
-# Should have: db-username, db-password, db-host, db-url
+kubectl logs job/${RELEASE}-realm-import-xxx -n ${NAMESPACE}
 ```
 
-### Users Not Imported
-
-**Check realm import job logs**:
+**Verify secret exists:**
 ```bash
-kubectl logs job/ichub-realm-import-<timestamp> -n ichub
-```
-
-**Verify realm exists**:
-```bash
-curl -s http://localhost:8080/auth/realms/ICHub | jq .realm
+kubectl get secret ${RELEASE}-keycloak-realm-users -n ${NAMESPACE}
 ```
 
 ---
 
 ## Rollback
 
-If issues occur:
+If migration fails:
 
 ```bash
 # Uninstall
-helm uninstall ichub -n ichub
+helm uninstall ${RELEASE} -n ${NAMESPACE}
 
-# Revert to Bitnami (git checkout Chart.yaml and values.yaml)
+# Delete new resources
+kubectl delete secret ichub-keycloak-db -n ${NAMESPACE}
+kubectl delete svc ichub-postgresql-alias -n ${NAMESPACE}
+
+# Revert chart changes
 git checkout HEAD~1 -- charts/industry-core-hub/Chart.yaml
 git checkout HEAD~1 -- charts/industry-core-hub/values.yaml
+git checkout HEAD~1 -- charts/industry-core-hub/templates/
+
+# Update dependencies (back to Bitnami)
+helm dependency update
 
 # Redeploy Bitnami version
-helm dependency update
-helm install ichub ./charts/industry-core-hub -n ichub
+helm install ${RELEASE} . -n ${NAMESPACE}
 ```
 
 ---
