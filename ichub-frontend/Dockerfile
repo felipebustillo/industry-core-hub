@@ -59,9 +59,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 USER root
 
 # Update base OS packages and vulnerable libraries
-RUN apk update \
-    && apk upgrade --no-cache \
-    && apk add --no-cache libxml2 openssl libcrypto3 libssl3 libpng
+RUN apk update --no-cache \
+    && apk add --no-cache libxml2=2.13.9-r0 openssl=3.5.5-r0 libcrypto3=3.5.5-r0 libssl3=3.5.5-r0 libpng=1.6.54-r0
 
 # Rename index.html to index.html.reference, to be used by env variables inject script
 # Create symlink for tmp for index.html to enable readOnlyRootFilesystem
