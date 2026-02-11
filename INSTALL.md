@@ -2,6 +2,9 @@
 
 Deploy Industry Core Hub either in a Kubernetes cluster (via Helm) or locally.
 
+> **💡 New to Industry Core Hub?**  
+> If this is your first time setting up the application, we recommend starting with our **[Quickstart Guide](./docs/QUICKSTART.md)**, which provides a step-by-step walkthrough including a complete data provision and consumption example.
+
 ### 1. Kubernetes Deployment with Helm
 
 #### Prerequisites
@@ -153,5 +156,6 @@ Visit [http://localhost:5173](http://localhost:5173).
 This work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
 
 - SPDX-License-Identifier: CC-BY-4.0
+- SPDX-FileCopyrightText: 2026 LKS Next
 - SPDX-FileCopyrightText: 2025 Contributors to the Eclipse Foundation
 - Source URL: https://github.com/eclipse-tractusx/industry-core-hub
