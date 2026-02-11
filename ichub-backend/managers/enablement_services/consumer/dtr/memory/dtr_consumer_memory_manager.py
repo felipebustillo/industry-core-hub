@@ -33,8 +33,7 @@ import base64
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 from tractusx_sdk.dataspace.tools import op
-from tractusx_sdk.dataspace.constants import JSONLDKeys
-from sqlmodel import Session, delete
+from sqlmodel import Session
 from tractusx_sdk.dataspace.services.connector import BaseConnectorConsumerService
 from managers.enablement_services.consumer.base_dtr_consumer_manager import BaseDtrConsumerManager
 from managers.enablement_services.consumer.dtr.pagination_manager import PaginationManager, DtrPaginationState, PageState
