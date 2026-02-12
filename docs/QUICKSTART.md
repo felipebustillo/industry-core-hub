@@ -172,6 +172,7 @@ npm install
     const ENV = {
         REQUIRE_HTTPS_URL_PATTERN: "false",
         ICHUB_BACKEND_URL: "http://localhost:8000"
+        PARTICIPANT_ID: "BPNL....."
     }
 </script>
 ```
