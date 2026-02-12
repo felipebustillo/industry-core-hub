@@ -17,23 +17,124 @@ SPDX-License-Identifier: CC-BY-4.0
 
 # Database Management
 
-Managing the Industry Core Hub database.
+Operational guide for Industry Core Hub PostgreSQL database management.
 
-**Status:** TBD
+**Database:** PostgreSQL 15.4+  
+**ORM:** SQLModel (SQLAlchemy-based)  
+**Deployment:** Kubernetes with Helm charts
 
-## Contents
+## Quick Reference
 
-- Database Tools
-- Schema Management
-- Migrations
-- Data Seeding
-- Backups
-- Performance Optimization
-- Maintenance Tasks
+| Task | Command |
+|------|---------|
+| Connect to DB | `psql -h <host> -U <user> -d <database>` |
+| Schema info | `\dt` (tables), `\d <table>` (details) |
+| Database size | `SELECT pg_size_pretty(pg_database_size('ichub'));` |
+| Active connections | `SELECT * FROM pg_stat_activity;` |
+| Backup | `pg_dump -Fc -v <database> > backup.dump` |
+| Restore | `pg_restore -d <database> backup.dump` |
 
 ---
 
-See the [Database DDL](./Metadata-DDL-public.sql) for the schema definition.
+## Schema Overview
+
+Three schemas manage different aspects:
+
+- **`public`** - Application data (19 core tables: batch, twin, catalog_part, etc.)
+- **`ichub`** - EDC connector cache (edr_connections, known_connectors, known_dtrs)
+- **`ichub_keycloak`** - Keycloak authentication (managed by Keycloak)
+
+See [Schema Documentation](./SCHEMA_DOCUMENTATION.md) and [DDL](./Metadata-DDL-public.sql).
+
+---
+
+## Configuration
+
+### Environment Variables
+
+```bash
+POSTGRES_DB=ichub
+POSTGRES_USER=ichub
+POSTGRES_PASSWORD=<secure-password>
+DB_URL=postgresql://ichub:password@postgres:5432/ichub
+```
+
+### Connection String Format
+
+```
+postgresql://username:password@hostname:5432/database?sslmode=require
+```
+
+### Kubernetes Values
+
+In `charts/industry-core-hub/values.yaml`:
+
+```yaml
+postgresql:
+  enabled: true
+  auth:
+    username: ichub
+    password: <set-via-secrets>
+  primary:
+    persistence:
+      size: 10Gi
+```
+
+---
+
+## Setup
+
+### Manual Schema Creation
+
+Use the provided DDL script to initialize the public schema:
+
+```bash
+psql -h postgres -U ichub -d ichub < Metadata-DDL-public.sql
+```
+
+### Kubernetes Automatic Initialization
+
+The database initializes automatically during Helm deployment via:
+- `configmap-backend-postgres-init.yaml` - Runs DDL scripts
+- `secret-backend-postgres.yaml` - Sets credentials
+
+Deploy via:
+```bash
+helm install industry-core-hub ./charts/industry-core-hub \
+  -f values.yaml
+```
+
+---
+
+## Backup & Recovery
+
+### Full Database Backup
+
+```bash
+# Create backup
+pg_dump -Fc -v -Z9 ichub > ichub_$(date +%Y%m%d_%H%M%S).dump
+
+# Verify backup
+pg_restore -l ichub_20260212_120000.dump | head -20
+```
+
+### Restore from Backup
+
+```bash
+# Connect to database
+psql -h localhost -U ichub -d ichub
+
+# Drop and recreate (if needed)
+DROP DATABASE ichub;
+CREATE DATABASE ichub;
+
+# Restore data
+pg_restore -d ichub ichub_20260212_120000.dump
+```
+
+---
+
+See the [Database DDL](./Metadata-DDL-public.sql) for schema definition and [Data Seeding Guide](./DATA_SEEDING_GUIDE.md) for test data setup.
 
 ## NOTICE
 
