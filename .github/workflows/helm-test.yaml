@@ -79,7 +79,7 @@ jobs:
           python-version: "3.9"
           check-latest: true
       - name: Helm lint
-        run: helm lint charts/industry-core-hub -f charts/test-helm-values-ichub.yaml
+        run: helm lint charts/industry-core-hub -f charts/industry-core-hub/values.yaml
 
       - name: Setup Helm repos
         run: |
