@@ -1,7 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 LKS Next
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -20,19 +21,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-# ================ CONSTANTS =========================
-TYPE = "@type"
-JSON_EXTENSION = ".json"
+"""Custom submodel adapters for Industry Core Hub."""
 
-# ================= CONTEXTS =========================
-ODRL_CONTEXT = "http://www.w3.org/ns/odrl/2/"
-CX_POLICY_CONTEXT = "https://w3id.org/catenax/policy/"
+from .http_submodel_adapter import HttpSubmodelAdapter
 
-# ==================== DESCRIPTIONS =========================
-TWIN_ID_DESCRIPTION = "The ID of the associated twin."
-BUSINESS_PARTNER_ID_DESCRIPTION = "The ID of the associated business partner."
-PARENT_ORDER_NUMBER_DESCRIPTION = "The parent order number of the JIS part."
-VAN_DESCRIPTION = "The optional VAN (Vehicle Assembly Number) of the serialized part."
-
-# ==================== API VERSIONS =========================
-API_V1 = "v1"
+__all__ = ["HttpSubmodelAdapter"]

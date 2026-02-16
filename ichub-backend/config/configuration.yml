@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -264,5 +265,27 @@ provider:
         obligation: []
 
   submodel_dispatcher:
+    # Mode selection: "filesystem" (local storage) or "http" (external service)
+    mode: "filesystem"
+    # Local filesystem configuration (used when mode=filesystem)
     path: "./data/submodels"
     apiPath: /submodel-dispatcher
+    # External HTTP service configuration (used when mode=http)
+    http:
+      # Base URL of the external ICHub-compatible submodel service
+      base_url: "https://<submodel-service-hostname>"
+      # Optional API path prefix (e.g., "/api/v1" or empty string)
+      api_path: "/v1/submodel-dispatcher"
+      # Authentication configuration
+      auth:
+        enabled: false
+        # Authentication type: "bearer" (Bearer token) or "apikey" (API Key)
+        type: "apikey"
+        # Authentication token/key - can use environment variable: ${SUBMODEL_SERVICE_TOKEN}
+        token: ""
+        # Header name for API key (required when type="apikey", e.g., "X-Api-Key")
+        key_name: "X-Api-Key"
+      # Request timeout in seconds
+      timeout: 30
+      # SSL certificate verification (set to false only for development)
+      verify_ssl: true
