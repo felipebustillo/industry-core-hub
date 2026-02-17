@@ -38,7 +38,7 @@ import {
   SelectChangeEvent
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import VerifiedIcon from '@mui/icons-material/Verified';
+import ReceiptLong from '@mui/icons-material/ReceiptLong';
 import { Certificate, CertificateStats, CertificateFilter } from '../types/types';
 import { CertificateFormData } from '../types/dialog-types';
 import { fetchAllCertificates, createCertificate, shareCertificate } from '../api';
@@ -237,7 +237,7 @@ const CertificateManagement = () => {
         <Grid2>
           <Box className="certificate-management__title-container">
             <Box className="certificate-management__icon-box">
-              <VerifiedIcon className="certificate-management__icon" />
+              <ReceiptLong className="certificate-management__icon" />
             </Box>
             <Box>
               <Typography variant="h5" className="certificate-management__title">

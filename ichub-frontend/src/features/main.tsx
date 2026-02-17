@@ -36,7 +36,7 @@ import {
   Badge,
   Policy,
   PostAdd,
-  VerifiedUser
+  ReceiptLong
 } from '@mui/icons-material';
 import { kitFeaturesFeature } from './kit-features/routes';
 import { FeatureConfig, NavigationItem } from '@/types/routing';
@@ -227,7 +227,7 @@ export const kits: KitFeature[] = [
     name: 'CCM KIT',
     description: 'Manage, share and consume compliance certificates via EDC and notifications with dataspace partners.',
     status: 'available',
-    icon: <VerifiedUser />,
+    icon: <ReceiptLong />,
     image: CcmKitImage,
     features: [
       {
@@ -235,7 +235,7 @@ export const kits: KitFeature[] = [
         id: 'certificate-management',
         name: 'Certificate Management',
         description: 'Upload, manage, share and consume compliance certificates across the supply chain.',
-        icon: <VerifiedUser />,
+        icon: <ReceiptLong />,
         enabled: true,
         default: true
       }
