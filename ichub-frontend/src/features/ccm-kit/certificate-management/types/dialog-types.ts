@@ -23,7 +23,7 @@
 export interface UploadCertificateDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (certificate: CertificateFormData) => void;
+  onSave: (certificate: CertificateFormData) => void | Promise<void>;
   certificateData?: CertificateFormData;
 }
 
