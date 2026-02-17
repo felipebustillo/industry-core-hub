@@ -1,7 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 LKS Next
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -20,24 +21,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""
-This module contains utility functions and classes for working with the Eclipse Tractus-X Industry Core Hub Backend.
+"""Custom submodel adapters for Industry Core Hub."""
 
-:copyright: (c) 2025 Eclipse Foundation
-:license: Apache License, Version 2.0, see LICENSE for more details.
-"""
+from .http_submodel_adapter import HttpSubmodelAdapter
 
-# Package-level variables
-__author__ = 'Eclipse Tractus-X Contributors'
-__license__ = "Apache License, Version 2.0"
-
-from .exceptions import (
-    InvalidError,
-    NotFoundError,
-    AlreadyExistsError,
-    NotAvailableError,
-    ExternalAPIError,
-    SubmodelNotSharedWithBusinessPartnerError,
-    DppNotFoundError,
-    DppShareError
-)
+__all__ = ["HttpSubmodelAdapter"]
