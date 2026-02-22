@@ -19,8 +19,8 @@
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
 ---
-nameOverride: "manufacturer-ichub-edc"
-fullnameOverride: "manufacturer-ichub-edc"
+nameOverride: "manufacturer-saturn-ichub-edc"
+fullnameOverride: "manufacturer-saturn-ichub-edc"
 
 secrets:
   client-secret: <path:industry-core-hub/data/wallet#clientSecret>
@@ -119,8 +119,10 @@ tractusx-connector:
           clusterIssuer: ""
 
   postgresql:
+    nameOverride: manufacturer-saturn-edc-postgresql
+    fullnameOverride: manufacturer-saturn-edc-postgresql
     auth:
-      database: edc
+      database: manufacturer-saturn-edc
       username: <path:industry-core-hub/data/db#username>
       postgresPassword: <path:industry-core-hub/data/db#password>
       password: <path:industry-core-hub/data/db#password>
@@ -128,7 +130,7 @@ tractusx-connector:
     password: <path:industry-core-hub/data/db#password>
 
   vault:
-    fullnameOverride: "vault"
+    fullnameOverride: "manufacturer-saturn-vault"
     hashicorp:
       url: <path:industry-core-hub/data/vault#url>
       token:  <path:industry-core-hub/data/vault#token>
