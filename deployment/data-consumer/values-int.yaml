@@ -22,6 +22,9 @@
 secrets:
   client-secret: <path:industry-core-hub/data/wallet#clientSecret>
 
+nameOverride: consumer-edc
+fullnameOverride: consumer-edc
+
 tractusx-connector:
   enabled: true
   participant:
@@ -116,8 +119,10 @@ tractusx-connector:
           clusterIssuer: ""
 
   postgresql:
+    nameOverride: consumer-edc-postgresql
+    fullnameOverride: consumer-edc-postgresql
     auth:
-      database: edc
+      database: consumer-edc
       username: <path:industry-core-hub/data/db#username>
       postgresPassword: <path:industry-core-hub/data/db#password>
       password: <path:industry-core-hub/data/db#password>
@@ -125,7 +130,7 @@ tractusx-connector:
     password: <path:industry-core-hub/data/db#password>
 
   vault:
-    fullnameOverride: "vault"
+    fullnameOverride: "consumer-vault"
     hashicorp:
       url: <path:industry-core-hub/data/vault#url>
       token:  <path:industry-core-hub/data/vault#token>
