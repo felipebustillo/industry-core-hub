@@ -121,6 +121,7 @@ tractusx-connector:
   postgresql:
     nameOverride: manufacturer-saturn-edc-postgresql
     fullnameOverride: manufacturer-saturn-edc-postgresql
+    jdbcUrl: "jdbc:postgresql://manufacturer-saturn-edc-postgresql:5432/manufacturer-saturn-edc"
     auth:
       database: manufacturer-saturn-edc
       username: <path:industry-core-hub/data/db#username>

@@ -121,6 +121,7 @@ tractusx-connector:
   postgresql:
     nameOverride: manufacturer-edc-postgresql
     fullnameOverride: manufacturer-edc-postgresql
+    jdbcUrl: "jdbc:postgresql://manufacturer-edc-postgresql:5432/manufacturer-edc"
     auth:
       database: manufacturer-edc
       username: <path:industry-core-hub/data/db#username>
