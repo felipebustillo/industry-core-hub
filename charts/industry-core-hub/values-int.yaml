@@ -78,7 +78,7 @@ frontend:
     
     # Keycloak configuration
     keycloak:
-      url: "https://ichub-iam.int.catena-x.net/auth"
+      url: "https://ichub-iam.int.catena-x.net/auth/"
       realm: "ICHub"
       clientId: "industry-core-hub-frontend"
       realmImport:
