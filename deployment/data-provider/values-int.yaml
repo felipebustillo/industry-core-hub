@@ -22,6 +22,9 @@
 secrets:
   client-secret: <path:industry-core-hub/data/walletProvider#clientSecret>
 
+nameOverride: jupiter-provider-edc
+fullnameOverride: jupiter-provider-edc
+
 tractusx-connector:
   enabled: true
   participant:
@@ -59,7 +62,7 @@ tractusx-connector:
       ## Public / Internet facing Ingress
       - enabled: true
         # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
-        hostname: "edc-provider-ichub-control.int.catena-x.net"
+        hostname: "jupiter-edc-provider-ichub-control.int.catena-x.net"
         # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
         className: "nginx"
         annotations:
@@ -98,7 +101,7 @@ tractusx-connector:
       ## Public / Internet facing Ingress
       - enabled: true
         # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
-        hostname: "edc-provider-ichub-dataplane.int.catena-x.net"
+        hostname: "jupiter-edc-provider-ichub-dataplane.int.catena-x.net"
         # -- Additional ingress annotations to add
                # -- Additional ingress annotations to add
         annotations:
@@ -123,8 +126,11 @@ tractusx-connector:
           clusterIssuer: ""
 
   postgresql:
+    nameOverride: jupiter-provider-edc-postgresql
+    fullnameOverride: jupiter-provider-edc-postgresql
+    jdbcUrl: "jdbc:postgresql://jupiter-provider-edc-postgresql:5432/provider-edc"
     auth:
-      database: edc
+      database: provider-edc
       username: <path:industry-core-hub/data/db#username>
       postgresPassword: <path:industry-core-hub/data/db#password>
       password: <path:industry-core-hub/data/db#password>
@@ -132,7 +138,7 @@ tractusx-connector:
     password: <path:industry-core-hub/data/db#password>
 
   vault:
-    fullnameOverride: "vault"
+    fullnameOverride: "jupiter-provider-vault"
     hashicorp:
       url: <path:industry-core-hub/data/vault#url>
       token:  <path:industry-core-hub/data/vault#token>
@@ -142,12 +148,12 @@ tractusx-connector:
 
 
 digital-twin-registry:
-  nameOverride: "dtr-provider"
-  fullnameOverride: "dtr-provider"
-  name: "dtr-provider"
+  nameOverride: "jupiter-dtr-provider"
+  fullnameOverride: "jupiter-dtr-provider"
+  name: "jupiter-dtr-provider"
   enabled: true
   registry:
-    host: dtr-ichub.int.catena-x.net
+    host: jupiter-dtr-ichub.int.catena-x.net
     ingress:
       enabled: true
       tls: 
@@ -168,18 +174,21 @@ digital-twin-registry:
     dataSource:
       url: jdbc:postgresql://dtr-provider-db:5432
   postgresql:
-    nameOverride: dtr-provider-postgresql
-    fullnameOverride: dtr-provider-postgresql
-    name: "dtr-provider-postgresql"
+    nameOverride: jupiter-dtr-provider-postgresql
+    fullnameOverride: jupiter-dtr-provider-postgresql
+    name: "jupiter-dtr-provider-postgresql"
     auth:
+      database: provider-dtr-db
       password: "<path:industry-core-hub/data/dtr#password>"
-      database: dtr-provider-db
-      # -- Secret contains passwords for username postgres.
-      existingSecret: secret-dtr-postgres-init-provider
+      existingSecret: jupiter-provider-secret-dtr-postgres-init
+  
+  keycloak:
+    nameOverride: jupiter-provider-dtr-keycloak
+    fullnameOverride: jupiter-provider-dtr-keycloak
 
 simple-data-backend:
   enabled: true
-  nameOverride: ichub-dataprovider-submodelserver
+  nameOverride: jupiter-ichub-dataprovider-submodelserver
   ingress:
     enabled: true
     ingressClassName: ""
@@ -189,14 +198,14 @@ simple-data-backend:
       # nginx.ingress.kubernetes.io/proxy-body-size: 50m
       cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
-    - host: "storage-ichub.int.catena-x.net"
+    - host: "jupiter-storage-ichub.int.catena-x.net"
       paths:
         - path: "/"
           pathType: "ImplementationSpecific"
     tls:
       - secretName: "submodel-server.tx.test-tls"
         hosts:
-          - "storage-ichub.int.catena-x.net"
+          - "jupiter-storage-ichub.int.catena-x.net"
   resources:
     limits:
       cpu: 500m

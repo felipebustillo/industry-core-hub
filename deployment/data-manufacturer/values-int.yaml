@@ -19,8 +19,8 @@
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
 ---
-nameOverride: "manufacturer-ichub-edc"
-fullnameOverride: "manufacturer-ichub-edc"
+nameOverride: "jupiter-manufacturer-ichub-edc"
+fullnameOverride: "jupiter-manufacturer-ichub-edc"
 
 secrets:
   client-secret: <path:industry-core-hub/data/wallet#clientSecret>
@@ -61,7 +61,7 @@ tractusx-connector:
       ## Public / Internet facing Ingress
       - enabled: true
         # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
-        hostname: "edc-consumer-ichub-control.int.catena-x.net"
+        hostname: "jupiter-edc-consumer-ichub-control.int.catena-x.net"
         # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
         className: "nginx"
         annotations:
@@ -100,7 +100,7 @@ tractusx-connector:
       ## Public / Internet facing Ingress
       - enabled: true
         # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
-        hostname: "edc-consumer-ichub-dataplane.int.catena-x.net"
+        hostname: "jupiter-edc-consumer-ichub-dataplane.int.catena-x.net"
         # -- Additional ingress annotations to add
                # -- Additional ingress annotations to add
         annotations:
@@ -125,8 +125,11 @@ tractusx-connector:
           clusterIssuer: ""
 
   postgresql:
+    nameOverride: jupiter-manufacturer-edc-postgresql
+    fullnameOverride: jupiter-manufacturer-edc-postgresql
+    jdbcUrl: "jdbc:postgresql://jupiter-manufacturer-edc-postgresql:5432/manufacturer-edc"
     auth:
-      database: edc
+      database: manufacturer-edc
       username: <path:industry-core-hub/data/db#username>
       postgresPassword: <path:industry-core-hub/data/db#password>
       password: <path:industry-core-hub/data/db#password>
@@ -134,7 +137,7 @@ tractusx-connector:
     password: <path:industry-core-hub/data/db#password>
 
   vault:
-    fullnameOverride: "vault"
+    fullnameOverride: "jupiter-manufacturer-vault"
     hashicorp:
       url: <path:industry-core-hub/data/vault#url>
       token:  <path:industry-core-hub/data/vault#token>
@@ -146,12 +149,12 @@ vault:
   enabled: false
 
 digital-twin-registry:
-  nameOverride: "dtr-manufacturer"
-  fullnameOverride: "dtr-manufacturer"
-  name: "dtr-manufacturer"
+  nameOverride: "jupiter-dtr-manufacturer"
+  fullnameOverride: "jupiter-dtr-manufacturer"
+  name: "jupiter-dtr-manufacturer"
   enabled: true
   registry:
-    host: dtr-consumer-ichub.int.catena-x.net
+    host: jupiter-dtr-consumer-ichub.int.catena-x.net
     ingress:
       enabled: true
       tls: 
@@ -170,44 +173,22 @@ digital-twin-registry:
         nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
         nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     dataSource:
-      url: jdbc:postgresql://dtr-manufacturer-postgresql:5432/dtr-manufacturer-db
+      url: jdbc:postgresql://jupiter-dtr-manufacturer-postgresql:5432/dtr-manufacturer-db
       username: default-user
       password: <path:industry-core-hub/data/db#password>
   postgresql:
-    nameOverride: dtr-manufacturer-postgresql
-    fullnameOverride: dtr-manufacturer-postgresql
-    name: "dtr-manufacturer-postgresql"
+    nameOverride: jupiter-dtr-manufacturer-postgresql
+    fullnameOverride: jupiter-dtr-manufacturer-postgresql
+    name: "jupiter-dtr-manufacturer-postgresql"
     auth:
       password: "<path:industry-core-hub/data/dtr#password>"
       database: dtr-manufacturer-db
-      existingSecret: secret-dtr-postgres-init
+      existingSecret: jupiter-manufacturer-secret-dtr-postgres-init
+  
+  keycloak:
+    nameOverride: jupiter-dtr-manufacturer-keycloak
+    fullnameOverride: jupiter-dtr-manufacturer-keycloak
 
 
 simple-data-backend:
-  enabled: true
-  nameOverride: ichub-dataconsumer-submodelserver
-  ingress:
-    enabled: true
-    ingressClassName: ""
-    annotations:
-      # uncomment the following line for tls
-      
-      # nginx.ingress.kubernetes.io/proxy-body-size: 50m
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    hosts:
-    - host: "storage-ichub-consumer.int.catena-x.net"
-      paths:
-        - path: "/"
-          pathType: "ImplementationSpecific"
-    tls:
-      - secretName: "submodel-server-consumer.tx.test-tls"
-        hosts:
-          - "storage-ichub-consumer.int.catena-x.net"
-  resources:
-    limits:
-      cpu: 500m
-      memory: 1024Mi
-    requests:
-      cpu: 500m
-      memory: 1024Mi
-      
+  enabled: false
