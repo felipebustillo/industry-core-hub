@@ -48,6 +48,9 @@ tractusx-connector:
           secret_alias: client-secret
 
   controlplane:
+    env:
+      EDC_DCP_V08_FORCED: true
+      EDC_CATALOG_CACHE_EXECUTION: false
     ingresses:
       - enabled: false
     bdrs:
@@ -60,6 +63,9 @@ tractusx-connector:
       readOnlyRootFilesystem: false
 
   dataplane:
+    env:
+      EDC_DCP_V08_FORCED: true
+      EDC_CATALOG_CACHE_EXECUTION: false
     ingresses:
       - enabled: false
     token:
@@ -82,6 +88,11 @@ tractusx-connector:
 
   postgresql:
     nameOverride: edc-postgresql
+    image:
+      # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+      repository: bitnamilegacy/postgresql
+      # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+      tag: 15.4.0-debian-11-r45
     primary:
       persistence:
         enabled: false
@@ -100,6 +111,11 @@ digital-twin-registry:
   enableKeycloak: false
 
   postgresql:
+    image:
+      # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+      repository: bitnamilegacy/postgresql
+      # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+      tag: 15.4.0-debian-11-r45
     primary:
       persistence:
         enabled: false
