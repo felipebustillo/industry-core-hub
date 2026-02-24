@@ -48,7 +48,7 @@ class NotificationsManagementService():
         """
         Create a new notification in the system.
         """
-        status: NotificationStatus
+        status: NotificationStatus = None
         if direction == NotificationDirection.INCOMING:
             logger.info(f"Creating incoming notification with ID: {notification.header.message_id}")
             status = NotificationStatus.RECEIVED
