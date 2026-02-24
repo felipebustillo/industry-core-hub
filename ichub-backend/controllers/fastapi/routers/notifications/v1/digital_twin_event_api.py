@@ -21,7 +21,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from types import NotImplementedType
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 
@@ -29,6 +28,14 @@ from tractusx_sdk.extensions.notification_api.models import (
     Notification)
 
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
+
+from services.notifications.notifications_management_service import NotificationsManagementService
+from services.notifications.digital_twin_event_api_service import DigitalTwinEventApiService
+from models.metadata_database.notification.models import NotificationDirection
+
+
+notification_management_service = NotificationsManagementService()
+digital_twin_event_api_service = DigitalTwinEventApiService(notification_management_service)
 
 router = APIRouter(
     prefix="/digital-twin-event",
@@ -39,19 +46,19 @@ router = APIRouter(
 @router.post("/connect-to-parent")
 async def connect_to_parent(notification: Notification) -> Response:
     # TODO: Implement the logic to handle the connection to the parent endpoint and process the received notification
-    return NotImplementedType("Connect to parent endpoint is not implemented yet")
+    return digital_twin_event_api_service.receive_connect_to_parent(notification, direction=NotificationDirection.INCOMING)
 
 @router.post("/connect-to-child")
 async def connect_to_child(notification: Notification) -> Response:
     # TODO: Implement the logic to handle the connection to the child endpoint and process the received notification
-    return NotImplementedType("Connect to child endpoint is not implemented yet")
+    return digital_twin_event_api_service.receive_connect_to_child(notification, direction=NotificationDirection.INCOMING)
 
 @router.post("/submodel-update")
 async def submodel_update(notification: Notification) -> Response:
     # TODO: Implement the logic to handle the submodel update and process the received notification
-    return NotImplementedType("Submodel update endpoint is not implemented yet")
+    return digital_twin_event_api_service.receive_submodel_update(notification, direction=NotificationDirection.INCOMING)
 
 @router.post("/feedback")
 async def feedback(notification: Notification) -> Response:
     # TODO: Implement the logic to handle the feedback and process the received notification
-    return NotImplementedType("Feedback endpoint is not implemented yet")
+    return digital_twin_event_api_service.receive_feedback(notification, direction=NotificationDirection.INCOMING)
