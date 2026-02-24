@@ -21,8 +21,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from types import NotImplementedType
-from typing import List
+from typing import List, Dict
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 
@@ -30,6 +29,11 @@ from tractusx_sdk.extensions.notification_api.models import (
     Notification)
 
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
+from services.notifications.notifications_management_service import NotificationsManagementService
+from models.metadata_database.notification.models import NotificationStatus, NotificationDirection
+
+
+notification_management_service = NotificationsManagementService()
 
 router = APIRouter(
     prefix="/notifications-management",
@@ -38,16 +42,30 @@ router = APIRouter(
 )
 
 @router.post("/notifications")
-async def get_all_notifications(offset: int = 0, limit: int = 10) -> List[Notification]:
-    # TODO: Implement the logic to retrieve all notifications with pagination support (offset and limit) and return the list of notifications
-    return NotImplementedType("Get all notifications endpoint is not implemented yet")
+async def get_all_notifications(bpn: str, status: NotificationStatus = None, offset: int = 0, limit: int = 10) -> List[Notification]:
+    return notification_management_service.get_all_notifications(bpn=bpn, status=status, offset=offset, limit=limit)
 
 @router.post("/notification")
-async def send_notification(notification: Notification) -> Response:
-    # TODO: Implement the logic to send a notification and return the appropriate response
-    return NotImplementedType("Send notification endpoint is not implemented yet")
+async def send_notification(notification: Notification, endpoint_url: str, provider_bpn: str, provider_dsp_url: str, list_policies: List[Dict]) -> Response:
+    notification_management_service.create_notification(notification, direction=NotificationDirection.OUTGOING)
+    success = notification_management_service.send_notification(notification, endpoint_url, provider_bpn, provider_dsp_url, list_policies)
+    if success:
+        return Response(status_code=201)
+    else:
+        return Response(status_code=400)
+
+@router.put("/notification/status")
+async def update_notification_status(message_id: str, status: NotificationStatus) -> Response:
+    success = notification_management_service.update_notification_status(message_id, status)
+    if success:
+        return Response(status_code=200)
+    else:
+        return Response(status_code=404)
 
 @router.delete("/notification")
-async def delete_notification(id: str) -> Response:
-    # TODO: Implement the logic to delete a notification by its ID and return the appropriate response
-    return NotImplementedType("Delete notification endpoint is not implemented yet")
+async def delete_notification(message_id: str) -> Response:
+    success = notification_management_service.delete_notification(message_id)
+    if success:
+        return Response(status_code=204)
+    else:
+        return Response(status_code=404)

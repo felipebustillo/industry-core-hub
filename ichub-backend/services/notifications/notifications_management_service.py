@@ -32,6 +32,8 @@ from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from models.metadata_database.notification.models import NotificationStatus, NotificationDirection, NotificationEntity
 
+from connector import connector_manager
+
 logger = LoggingManager.get_logger(__name__)
 
 class NotificationsManagementService():
@@ -39,8 +41,8 @@ class NotificationsManagementService():
     Service class for managing notifications.
     """
 
-    def __init__(self, connector_consumer_service: BaseConnectorConsumerService):
-        self.connector_consumer_service = connector_consumer_service
+    def __init__(self):
+        self.connector_consumer_service: BaseConnectorConsumerService = connector_manager.consumer.connector_service
 
     def create_notification(self, notification: Notification, direction: NotificationDirection) -> NotificationEntity:
         """
