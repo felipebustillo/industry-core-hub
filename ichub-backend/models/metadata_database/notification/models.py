@@ -56,7 +56,7 @@ class NotificationEntity(SQLModel, table=True):
     direction: NotificationDirection = Field(default=NotificationDirection.INCOMING, index=True)
     status: NotificationStatus = Field(default=NotificationStatus.RECEIVED, index=True)
 
-    full_notification: Notification = Field(sa_column=Column(JSON), nullable=False)
+    full_notification: Notification = Field(sa_column=Column(JSON, nullable=False))
 
     @classmethod
     def from_sdk(
