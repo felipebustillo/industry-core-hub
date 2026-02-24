@@ -44,7 +44,12 @@ from models.metadata_database.provider.models import (
     PartnerCatalogPart,
     DataExchangeAgreement
 )
-
+from models.metadata_database.notification.models import (
+    NotificationEntity,
+    NotificationDirection,
+    NotificationStatus
+)
+from tractusx_sdk.extensions.notification_api.models import Notification
 
 ModelType = TypeVar("ModelType", bound=SQLModel)
 
@@ -662,3 +667,77 @@ class TwinRegistrationRepository(BaseRepository[TwinRegistration]):
         )
         self.create(twin_registration)
         return twin_registration
+
+class NotificationRepository(BaseRepository[NotificationEntity]):
+    """
+    Repository for managing Industry Core Notifications.
+    """
+    
+    def create_new(
+        self, 
+        notification: Notification, 
+        direction: NotificationDirection,
+        status: NotificationStatus = NotificationStatus.PENDING
+    ) -> NotificationEntity:
+        """
+        Creates a new NotificationEntity from an SDK model (passed as a dict) 
+        and the specific flow direction.
+        """        
+        db_notification = NotificationEntity.from_sdk(
+            notification=notification, 
+            direction=direction, 
+            status=status
+        )
+        self.create(db_notification)
+        return db_notification
+
+    def find_by_message_id(self, message_id: UUID) -> Optional[NotificationEntity]:
+        """Find a notification by its unique Catena-X messageId."""
+        stmt = select(NotificationEntity).where(
+            NotificationEntity.message_id == message_id
+        )
+        return self._session.scalars(stmt).first()
+
+    def find_by_bpn(
+        self, 
+        bpn: str, 
+        direction: Optional[NotificationDirection] = None,
+        status: Optional[NotificationStatus] = None,
+        limit: int = 100,
+        offset: int = 0
+    ) -> List[NotificationEntity]:
+        """
+        Retrieves notifications related to a specific Business Partner.
+        Useful for 'Inbox' (Incoming) or 'Sent' (Outgoing) views.
+        """
+        stmt = select(NotificationEntity)
+        
+        # Filter by BPN: If incoming, we are the recipient. If outgoing, we are the sender.
+        if direction == NotificationDirection.INCOMING:
+            stmt = stmt.where(NotificationEntity.recipient_bpn == bpn)
+        elif direction == NotificationDirection.OUTGOING:
+            stmt = stmt.where(NotificationEntity.sender_bpn == bpn)
+        else:
+            # If direction isn't specified, find any interaction with this BPN
+            stmt = stmt.where(
+                (NotificationEntity.sender_bpn == bpn) | 
+                (NotificationEntity.recipient_bpn == bpn)
+            )
+
+        if status:
+            stmt = stmt.where(NotificationEntity.status == status)
+
+        # Order by newest first
+        stmt = stmt.order_by(desc(NotificationEntity.created_at)).offset(offset).limit(limit)
+        
+        return list(self._session.scalars(stmt).all())
+
+    def update_status(self, message_id: UUID, new_status: NotificationStatus) -> Optional[NotificationEntity]:
+        """Update the lifecycle status of a notification."""
+        db_obj = self.find_by_message_id(message_id)
+        if not db_obj:
+            return None
+        
+        db_obj.status = new_status
+        self._session.add(db_obj)
+        return db_obj
