@@ -25,6 +25,8 @@ from uuid import UUID
 from typing import List, Optional
 
 from tractusx_sdk.extensions.notification_api.models import Notification
+from tractusx_sdk.extensions.notification_api import NotificationConsumerService, NotificationError
+from tractusx_sdk.dataspace.services.connector.base_connector_consumer import BaseConnectorConsumerService
 
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
@@ -36,6 +38,9 @@ class NotificationsManagementService():
     """
     Service class for managing notifications.
     """
+
+    def __init__(self, connector_consumer_service: BaseConnectorConsumerService):
+        self.connector_consumer_service = connector_consumer_service
 
     def create_notification(self, notification: Notification, direction: NotificationDirection) -> NotificationEntity:
         """
@@ -81,3 +86,29 @@ class NotificationsManagementService():
         with RepositoryManagerFactory().create() as repos:
             success = repos.notification_repository.delete_by_message_id(message_id=message_id)
             return success
+
+    def send_notification(self, notification: Notification, endpoint_url: str, provider_bpn: str, provider_dsp_url: str, list_policies: List[Dict]) -> None:
+        """
+        Send a notification to the specified endpoint using the connector consumer service.
+        """
+        try:
+            notification_service = NotificationConsumerService(
+                self.connector_consumer_service,
+                verbose=True
+            )
+
+            result = notification_service.send_notification(
+                provider_bpn=provider_bpn,
+                provider_dsp_url=provider_dsp_url,
+                notification=notification,
+                endpoint_path=endpoint_url,
+                policies=list_policies
+            )
+            logger.info(f"Notification sent with result: {result}")
+            return result
+
+        except NotificationError:
+            raise
+        except Exception as e:
+            logger.error(f"Error sending notification: {e}")
+            raise NotificationError(f"Failed to send notification: {e}")
