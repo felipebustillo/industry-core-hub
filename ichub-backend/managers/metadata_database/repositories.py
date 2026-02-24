@@ -712,16 +712,16 @@ class NotificationRepository(BaseRepository[NotificationEntity]):
         """
         stmt = select(NotificationEntity)
         
-        # Filter by BPN: If incoming, we are the recipient. If outgoing, we are the sender.
+        # Filter by BPN: If incoming, we are the receiver. If outgoing, we are the sender.
         if direction == NotificationDirection.INCOMING:
-            stmt = stmt.where(NotificationEntity.recipient_bpn == bpn)
+            stmt = stmt.where(NotificationEntity.receiver_bpn == bpn)
         elif direction == NotificationDirection.OUTGOING:
             stmt = stmt.where(NotificationEntity.sender_bpn == bpn)
         else:
             # If direction isn't specified, find any interaction with this BPN
             stmt = stmt.where(
                 (NotificationEntity.sender_bpn == bpn) | 
-                (NotificationEntity.recipient_bpn == bpn)
+                (NotificationEntity.receiver_bpn == bpn)
             )
 
         if status:
@@ -741,3 +741,12 @@ class NotificationRepository(BaseRepository[NotificationEntity]):
         db_obj.status = new_status
         self._session.add(db_obj)
         return db_obj
+
+    def delete_by_message_id(self, message_id: UUID) -> bool:
+        """Delete a notification by its messageId. Returns True if deleted, False if not found."""
+        db_obj = self.find_by_message_id(message_id)
+        if not db_obj:
+            return False
+        
+        self.delete_obj(db_obj)
+        return True
