@@ -76,7 +76,7 @@ export default defineConfig(({ mode }) => {
     // Proxy for development
     proxy: isDevelopment ? {
       '/api': {
-        target: 'http://localhost:9000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/v1')
       }
