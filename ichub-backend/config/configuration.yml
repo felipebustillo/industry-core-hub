@@ -24,12 +24,12 @@
 hostname: "http://localhost:9000"
 
 authorization:
-  enabled: true
+  enabled: false
   api_key:
     key: "X-Api-Key"
     value: <<example>>
   keycloak:
-    enabled: true
+    enabled: false
     auth_url: "http://localhost:8080"
     realm: "ICHub"
     client_id: "industry-core-hub-api"
@@ -163,6 +163,7 @@ cors:
   enabled: true
   allow_origins:
     - "http://localhost:5173"     # Vite dev server
+    - "http://localhost:5174"     # ICHub frontend dev server
     - "http://localhost:3000"     # React dev server
     - "http://localhost:8080"     # Alternative frontend port
     - "http://127.0.0.1:5173"     # Alternative localhost notation
